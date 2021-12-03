@@ -1,0 +1,269 @@
+---
+title: "main_project"
+author: "Yulia"
+date: '2 декабря 2021 г '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,     # отображение кода в итоговом документе
+                      message = FALSE,  # отображение сообщений в итоговом документе
+                      error = FALSE,    # отображение ошибок в итоговом документе
+                      warning = FALSE,  # отображение предупреждений в итоговом документе
+                      cache = FALSE,    # надо ли сохранять код в чанках до их изменений
+                      fig.height = 10, # высота рисунка в дюймах
+                      fig.width = 10)  # широта рисунка в дюймах
+
+
+library(tidyverse)
+library(dplyr)
+library(readxl)
+library(ggplot2)
+```
+
+## R Markdown
+Читаем файл
+
+```{r }
+df_raw <- read_excel("./data/raw/reconstitution_v1_enc.xlsx")
+str(df_raw)
+View(df_raw)
+```
+
+## All data modifications
+
+```{r pressure, echo=FALSE}
+df <- df_raw  %>%
+  # переименование
+  rename(Restage_on_TKM_point = "Рестадирование на момент ТКМ (стадия)[ПредТКМэ]" ) %>%
+  rename(Age = "Возраст (полных лет) на момент ТКМ") %>% 
+  rename(BMI = "Индекс массы тела") %>%
+  rename(Conditioning = "Режим кондиционирования[ПредТКМэ]") %>%
+  rename(BMT_kind = "Вид ТКМ настоящей [ПТКМ,ПредТКМэ,ПДИТКМ]") %>%
+  rename(Source_sc = "Источник[ПредТКМэ,ПТКМ,ПДИ]") %>%
+  rename(Donor_sex = "Donor sex") %>%
+  rename(Sex = "Пол") %>%
+  rename(Disease_state_reconstitution = "State of the disease_reconstitution") %>%
+  rename(Reconstitution = "reconstitution") %>%
+  rename(HLA_match = "HLA-match") %>%
+  rename(Transplantation_date = "Дата ТКМ (из протокола)[ПТКМ,ПДИ]") %>%
+  rename(Diagnosis_date = "Дата диагноза [АЗ гем]") %>%
+  rename(Leukocyte_recovery = "Восстановление Лейкоциты дата [ТПП, 100 дн]") %>%
+  rename(Neutrophil_recovery = "Восстановление Нейтрофилы дата [ТПП,100 дн]") %>%
+  rename(Platelet_recovery = "Восстановление Тр20 дата [ТПП, 100 дн]") %>%
+  rename(Rejection_date = "Дата отторжения [ТПП,100дн]") %>%
+  
+  # фильтрация  - убираем лишние строки сразу
+  filter(Reconstitution != "death_before" ) %>%
+  filter(Diagnosis == "Acute_leukemia" ) %>%
+  filter((Source_sc != "cord_blood")) %>%
+
+  # Изменение содержимого стобцов
+  # BMI
+  mutate(BMI = as.numeric(gsub(",", ".", BMI) )) %>%    # заменить точки на запятые
+  mutate(BMI = ifelse( (BMI > 100), BMI/10, BMI)) %>%   # исправляем ошибку в данных BMI
+  mutate(BMI = ifelse((BMI == 0.0), NA, BMI)) %>%       # 0 в NA
+  
+  # Reconstitution
+  mutate(Reconstitution = factor(ifelse( (Reconstitution == "no"), "no", "yes"))) %>%
+  
+  # BMT_kind
+  mutate(BMT_kind = case_when(
+    grepl ("аллогенная_неродственная", BMT_kind) ~ "allogeneic_unrelated",
+    grepl ("аллогенная_родственная", BMT_kind) ~ "allogeneic_related",
+    grepl ("гаплоидентичная", BMT_kind) ~ "haploidentical"))  %>%
+  
+  # Restage_on_TKM_point перевод и замена: ремиссия и рецидив,остальные - unknown
+  mutate(Restage_on_TKM_point = case_when(
+    grepl ("ремиссия", Restage_on_TKM_point) ~ "remission",
+    grepl ("рецидив", Restage_on_TKM_point) ~ "relapse",
+    TRUE ~ "unknown"))   %>%
+  
+  # Sex перевод
+  mutate(Sex = case_when(
+    grepl ("Мужской", Sex) ~ "male",
+    grepl ("Женский", Sex) ~ "female")) %>%
+  
+  # Объединяем виды Source_sc
+  mutate(Source_sc = case_when(
+    grepl ("BM", Source_sc) ~ "BM",
+    grepl ("PBSC", Source_sc) ~ "PBSC")) %>%
+
+  # Новая колонка - комбинаци BMT_kind & HLA_match
+  mutate(Transplantation_groups = case_when( 
+    (BMT_kind ==  "allogeneic_related") ~ "allogeneic_related", 
+    (BMT_kind ==  "haploidentical") ~ "haploidentical",  
+    ( (BMT_kind ==  "allogeneic_unrelated") & (HLA_match ==  "matched")) ~  
+      "allogeneic_unrelated_matched", 
+    ( (BMT_kind ==  "allogeneic_unrelated") & (HLA_match ==  "mismatched")) ~  
+      "allogeneic_unrelated_mismatched"  ))  %>%
+  
+  
+  #Отбираем нужные переменных
+  select(c(Donor_sex, Diagnosis, Disease_state_reconstitution, 
+           HLA_match, BMT_kind,
+            Restage_on_TKM_point, Age, BMI, Conditioning, 
+            Source_sc, Reconstitution, Sex, Transplantation_groups))
+```
+
+## Смотрим преобразованные данные
+
+```{r }
+
+View(df)
+str(df)
+```
+## В переменной Transplantation_groups - основное отличие между Reconstitution yes/no
+Transplantation_groups 
+```{r }
+# Данные
+table(df$Transplantation_groups)
+prop.table(table(df$BMT_kind, df$HLA_match))
+
+```
+Таблицы сопряженности
+
+```{r }
+
+#Таблицы сопряженности
+prop.table(table(df$Reconstitution, df$Transplantation_groups))
+#table(df$Reconstitution, df$Transplantation_groups)
+
+```
+
+
+Тесты
+
+```{r }
+
+# Тесты
+chisq.test(df$Reconstitution, df$Transplantation_groups)
+fisher.test(df$Reconstitution, df$Transplantation_groups)
+```
+
+График
+
+```{r }
+
+# График    
+ggplot(df, aes(x =  Reconstitution,
+               fill = Transplantation_groups )) +
+  geom_bar(position = "fill") +
+  theme_classic()
+
+```
+
+#Еще одна переменная, по которой есть значимое отличие - Source_sc
+
+```{r }
+
+table(df$Source_sc)
+# тут есть  редкие значения BM+BM = 1, BM+PBSC = 1, cord_blood =1, PBSC+PBSC=1
+# их дропнуть, преобразовать или так оставить
+
+
+```
+
+```{r }
+
+#Таблицы сопряженности
+prop.table(table(df$Reconstitution, df$Source_sc))
+table(df$Reconstitution, df$Source_sc)
+
+# Тесты
+chisq.test(df$Reconstitution, df$Source_sc)
+fisher.test(df$Reconstitution, df$Source_sc)
+
+# График    
+ggplot(df, aes(x =  Reconstitution,
+               fill = Source_sc)) +
+  geom_bar(position = "fill") +
+  theme_classic()
+
+
+```
+# Другие графики 
+```{r }
+
+hist(df$Age)
+hist(df$BMI)
+
+
+```
+# Другие графики 
+```{r }
+ggplot(df, aes(x = Reconstitution, y = BMI)) +
+  geom_boxplot(color="red",
+               fill='grey') +
+  geom_jitter(width = 0.1,
+              alpha = 0.31,
+              color = "black") +
+  theme_classic()
+
+
+ggplot(df, aes(x = Reconstitution, y = Age)) +
+  geom_boxplot(color="red",
+               fill='grey') +
+  geom_jitter(width = 0.1,
+              alpha = 0.31,
+              color = "black") +
+  theme_classic()
+
+
+
+ggplot(df, aes(x =  Reconstitution, y = BMI)) +
+  geom_violin(color = "darkgreen",
+              fill = "lightgreen") +
+  geom_boxplot(fill = "green",
+               width = 0.05) +
+  theme_classic()
+
+ggplot(df, aes(x = Reconstitution,
+               fill = Donor_sex)) +
+  geom_bar() +
+  theme_classic()
+
+ggplot(df, aes(x = Reconstitution,
+               fill = Sex)) +
+  geom_bar() +
+  theme_classic()
+
+
+ggplot(df, aes(x =  Reconstitution,
+               fill = Sex)) +
+  geom_bar(position = "fill") +
+  theme_classic()
+# посчитать тест на значимость различий
+
+
+ggplot(df, aes(x =  Reconstitution,
+               fill = Restage_on_TKM_point)) +
+  geom_bar(position = "fill") +
+  theme_classic()
+# посчитать тест на значимость различий
+
+
+ggplot(dp, aes(x =  Reconstitution,
+               fill = HLA_match)) +
+  geom_bar(position = "fill") +
+  theme_classic()
+
+
+ggplot(df, aes(x =  Reconstitution,
+               fill = Disease_state_reconstitution)) +
+  geom_bar(position = "fill") +
+  theme_classic()
+
+
+ggplot(df, aes(x =  Reconstitution,
+               fill = Conditioning)) +
+  geom_bar(position = "fill") +
+  theme_classic()
+
+ggplot(df, aes(x =  Reconstitution,
+               fill = Conditioning)) +
+  geom_bar(position = "fill") +
+  theme_classic()
+
+
+```
