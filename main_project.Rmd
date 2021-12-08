@@ -260,10 +260,59 @@ ggplot(df, aes(x =  Reconstitution,
   geom_bar(position = "fill") +
   theme_classic()
 
-ggplot(df, aes(x =  Reconstitution,
-               fill = Conditioning)) +
-  geom_bar(position = "fill") +
-  theme_classic()
 
+```
+
+```{r }
+#########################################################################
+# Test and train
+set.seed(42)
+default_idx = sample(nrow(df), 500)
+default_trn = df[default_idx, ]
+default_tst = df[-default_idx, ]
+
+table(default_trn$Reconstitution)
+table(default_tst$Reconstitution)
+
+##################################################################
+
+```
+
+```{r }
+#########################################################################
+# Regression
+# https://www.datacamp.com/community/tutorials/logistic-regression-R
+# Строим модель
+glm.fit <- glm(Reconstitution ~ Transplantation_groups + Source_sc + Age, 
+               data = default_trn, family = binomial)
+
+# смотрим на модель
+summary(glm.fit)
+
+coef(glm.fit)
+
+head(predict(glm.fit))
+
+glm.probs <- predict(glm.fit, type = "response")
+glm.probs[1:10]
+
+# Как она предсказывает на трейне, порог тут 0,9 - можно менять
+glm.pred <- ifelse(glm.probs > 0.9, "yes", "no")
+attach(default_trn)
+table(glm.pred, Reconstitution)
+#table(default_trn$Reconstitution)
+
+##################################################################
+
+```
+
+```{r }
+#########################################################################
+# Строим ROC/AUC на тестовой выборке
+library(pROC)
+test_prob = predict(glm.fit, newdata = default_tst, type = "response")
+test_roc = roc(default_tst$Reconstitution ~ test_prob, plot = TRUE, print.auc = TRUE)
+
+##################################################################
 
 ```
