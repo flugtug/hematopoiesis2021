@@ -33,6 +33,7 @@ View(df_raw)
 ## All data modifications
 
 ```{r pressure, echo=FALSE}
+
 df <- df_raw  %>%
   # переименование
   rename(Restage_on_TKM_point = "Рестадирование на момент ТКМ (стадия)[ПредТКМэ]" ) %>%
@@ -52,6 +53,7 @@ df <- df_raw  %>%
   rename(Neutrophil_recovery = "Восстановление Нейтрофилы дата [ТПП,100 дн]") %>%
   rename(Platelet_recovery = "Восстановление Тр20 дата [ТПП, 100 дн]") %>%
   rename(Rejection_date = "Дата отторжения [ТПП,100дн]") %>%
+  rename(Patient_ID = "Рег номер пациента") %>%
   
   # фильтрация  - убираем лишние строки сразу
   filter(Reconstitution != "death_before" ) %>%
@@ -100,10 +102,11 @@ df <- df_raw  %>%
   
   
   #Отбираем нужные переменных
-  select(c(Donor_sex, Diagnosis, Disease_state_reconstitution, 
+  select(c(Patient_ID, Donor_sex,  Disease_state_reconstitution,  #Diagnosis
            HLA_match, BMT_kind,
             Restage_on_TKM_point, Age, BMI, Conditioning, 
             Source_sc, Reconstitution, Sex, Transplantation_groups))
+            
 ```
 
 ## Смотрим преобразованные данные
@@ -113,6 +116,14 @@ df <- df_raw  %>%
 View(df)
 str(df)
 ```
+
+
+```{r }
+# Collect Patien_IDs
+write.table(df$Patient_ID, file='Проект гемопоез, отобранные пациенты.tsv', row.names = FALSE, col.names = FALSE)
+
+```
+
 ## В переменной Transplantation_groups - основное отличие между Reconstitution yes/no
 Transplantation_groups 
 ```{r }
@@ -243,7 +254,7 @@ ggplot(df, aes(x =  Reconstitution,
 # посчитать тест на значимость различий
 
 
-ggplot(dp, aes(x =  Reconstitution,
+ggplot(df, aes(x =  Reconstitution,
                fill = HLA_match)) +
   geom_bar(position = "fill") +
   theme_classic()
