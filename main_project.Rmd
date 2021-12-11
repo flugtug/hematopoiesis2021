@@ -54,11 +54,13 @@ df <- df_raw  %>%
   rename(Platelet_recovery = "Восстановление Тр20 дата [ТПП, 100 дн]") %>%
   rename(Rejection_date = "Дата отторжения [ТПП,100дн]") %>%
   rename(Patient_ID = "Рег номер пациента") %>%
+  rename(TKM_number = "Порядковый номер настоящей трансплантации[ПТКМ,ПДИТКМ]")  %>%
   
   # фильтрация  - убираем лишние строки сразу
   filter(Reconstitution != "death_before" ) %>%
   filter(Diagnosis == "Acute_leukemia" ) %>%
   filter((Source_sc != "cord_blood")) %>%
+  filter(TKM_number == 1) %>%
 
   # Изменение содержимого стобцов
   # BMI
@@ -311,7 +313,7 @@ glm.probs[1:10]
 glm.pred <- ifelse(glm.probs > 0.9, "yes", "no")
 attach(default_trn)
 table(glm.pred, Reconstitution)
-#table(default_trn$Reconstitution)
+#table(glm.pred, default_trn$Reconstitution)
 
 ##################################################################
 
