@@ -205,73 +205,76 @@ hist(df$BMI)
 ```
 # Другие графики 
 ```{r }
-ggplot(df, aes(x = Reconstitution, y = BMI)) +
-  geom_boxplot(color="red",
-               fill='grey') +
-  geom_jitter(width = 0.1,
-              alpha = 0.31,
-              color = "black") +
-  theme_classic()
+p1 <- ggplot(df, aes(x = Reconstitution, y = BMI,
+                    fill = Reconstitution)) +
+  geom_boxplot() +
+  geom_jitter()
+p1 + scale_fill_brewer(palette = "YlGn") + theme_classic() + stat_compare_means()
 
+#######################################
+p2 <- ggplot(df, aes(x = Reconstitution, y = Age,
+                    fill = Reconstitution)) +
+  geom_boxplot() +
+  geom_jitter()
+p2 + scale_fill_brewer(palette = "GnBu") + theme_classic() + stat_compare_means()
 
-ggplot(df, aes(x = Reconstitution, y = Age)) +
-  geom_boxplot(color="red",
-               fill='grey') +
-  geom_jitter(width = 0.1,
-              alpha = 0.31,
-              color = "black") +
-  theme_classic()
+#######################################
+p3 <- ggplot(df, aes(x =  Reconstitution, y = BMI)) +
+  geom_violin(fill = "yellow",
+              alpha = 0.5,
+              width = 0.6) +
+  geom_boxplot(fill = "lightgreen",
+               width = 0.3)
+p3 + scale_fill_brewer(palette = "YlGn") + theme_classic() + stat_compare_means()
+  
 
-
-
-ggplot(df, aes(x =  Reconstitution, y = BMI)) +
-  geom_violin(color = "darkgreen",
-              fill = "lightgreen") +
-  geom_boxplot(fill = "green",
-               width = 0.05) +
-  theme_classic()
-
-ggplot(df, aes(x = Reconstitution,
+######################################
+p4 <- ggplot(df, aes(x = Reconstitution,
                fill = Donor_sex)) +
-  geom_bar() +
-  theme_classic()
+  geom_bar()
+p4 + scale_fill_brewer(palette = "GnBu") + theme_classic()
 
-ggplot(df, aes(x = Reconstitution,
+
+######################################
+p5 <- ggplot(df, aes(x = Reconstitution,
                fill = Sex)) +
-  geom_bar() +
-  theme_classic()
+  geom_bar()
+p5 + scale_fill_brewer(palette = "GnBu") + theme_classic()
 
-
-ggplot(df, aes(x =  Reconstitution,
+######################################
+p6 <- ggplot(df, aes(x =  Reconstitution,
                fill = Sex)) +
-  geom_bar(position = "fill") +
-  theme_classic()
+  geom_bar(position = "fill")
+p6 + scale_fill_brewer(palette = "GnBu") + theme_classic()
+
 # посчитать тест на значимость различий
 
-
-ggplot(df, aes(x =  Reconstitution,
+######################################
+p7 <- ggplot(df, aes(x =  Reconstitution,
                fill = Restage_on_TKM_point)) +
-  geom_bar(position = "fill") +
-  theme_classic()
+      geom_bar(position = "fill")
+p7 + scale_fill_brewer(palette = "YlGn") + theme_classic()
+
 # посчитать тест на значимость различий
 
-
-ggplot(df, aes(x =  Reconstitution,
+######################################
+p8 <- ggplot(df, aes(x =  Reconstitution,
                fill = HLA_match)) +
-  geom_bar(position = "fill") +
-  theme_classic()
+  geom_bar(position = "fill") 
+p8 + scale_fill_brewer(palette = "Paired") + theme_classic()
 
-
-ggplot(df, aes(x =  Reconstitution,
+######################################
+p9 <- ggplot(df, aes(x =  Reconstitution,
                fill = Disease_state_reconstitution)) +
-  geom_bar(position = "fill") +
-  theme_classic()
+  geom_bar(position = "fill")
+p9 + scale_fill_brewer(palette = "Paired") + theme_classic()
 
 
-ggplot(df, aes(x =  Reconstitution,
+######################################
+p10 <- ggplot(df, aes(x =  Reconstitution,
                fill = Conditioning)) +
-  geom_bar(position = "fill") +
-  theme_classic()
+  geom_bar(position = "fill")
+p10 + scale_fill_brewer(palette = "YlGn") + theme_classic()
 
 
 ```
