@@ -332,3 +332,111 @@ test_roc = roc(default_tst$Reconstitution ~ test_prob, plot = TRUE, print.auc = 
 ##################################################################
 
 ```
+
+
+
+##################################################################
+## Add the second dataset with  blood analysis
+### Days 10, 15, 20, 25, boxplots
+```{r }
+df_raw2 <- read_excel("./data/raw/blood_tests.xlsx")
+View(df_raw2)
+str(df_raw2)
+
+# colect columns and remove duplicated days for a patient
+dfblood_some_days <- df_raw2 %>%
+  dplyr::filter(day_after_HSCT %in% c(10, 15, 20, 25)) %>%
+  dplyr::select(c(ID, WBC, PLT, day_after_HSCT)) %>%
+  dplyr::group_by(ID, day_after_HSCT) %>%
+  dplyr::summarise(WBC=mean(WBC), PLT = mean(PLT)) %>%
+  dplyr::rename(Patient_ID = ID)  
+
+View(dfblood_some_days)
+
+# check for duplicates
+length(unique(dfblood_some_days$Patient_ID))
+length(dfblood_some_days$Patient_ID)
+
+# Merge with the main dataset
+combined_some_days  <- merge(df, dfblood_some_days, by = "Patient_ID")
+View(combined_some_days)
+
+table(combined_some_days$Reconstitution)
+table(combined_some_days$day_after_HSCT)
+
+
+# Boxplots
+ggplot(day10, aes(x = , y = PLT, fill = Reconstitution)) +  
+  geom_boxplot() +  
+  facet_grid(. ~ day_after_HSCT)  +
+  scale_y_log10() +
+  ylab("log10(PLT)") + 
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  theme_classic()
+
+
+ggplot(day10, aes(x = , y = WBC, fill = Reconstitution)) +  
+  geom_boxplot() +  
+  facet_grid(. ~ day_after_HSCT)  +
+  #scale_y_continuous(limits = quantile(day10$WBC, c(0.1, 0.9))) +
+  scale_y_log10() +
+  ylab("log10(WBC)") + 
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  theme_bw() 
+
+
+ggplot(day10, aes(x = Reconstitution, y = PLT)) +
+  geom_boxplot(color="red",
+               fill='grey') +
+  geom_jitter(width = 0.1,
+              alpha = 0.31,
+              color = "black") +
+  theme_classic()
+```
+
+
+### All days before 35 - geom_errorbars
+```{r }
+#!!!!!!!!!!!!!!!!!!!!!!!!!
+# this block uses library(Rmisc), that conflict with dplyr
+# in case of errors use dplyr::rename instead of rename
+library(Rmisc)
+#!!!!!!!!!!!!!!!!!!!!!!!!!
+
+dfblood_all_days <- df_raw2 %>%
+  dplyr::filter(day_after_HSCT < 35 ) %>%
+  dplyr::select(c(ID, WBC, PLT, day_after_HSCT)) %>%
+  dplyr::rename(Patient_ID = "ID")
+
+day_all <- merge(df, dfblood_all_days, by = "Patient_ID")
+#view(day_all)
+#table(day_all$Reconstitution)
+#table(dfblood_all_days$day_after_HSCT)
+
+stat_WBC <- summarySE(day_all, 
+                      measurevar="WBC", 
+                      groupvar=c('day_after_HSCT', 'Reconstitution'), na.rm = TRUE)
+#view(stat_WBC)
+
+ggplot( stat_WBC, aes(x=day_after_HSCT, y=WBC, colour=Reconstitution)) + 
+  geom_errorbar(aes(ymin=WBC-se, ymax=WBC+se), width=0.2, size=0.5) +
+  geom_line() +
+  geom_point() +
+  theme_classic() 
+
+stat_PLT <- summarySE(day_all, 
+                      measurevar="PLT", 
+                      groupvar=c('day_after_HSCT', 'Reconstitution'), na.rm = TRUE)
+#view(stat_PLT)
+
+ggplot( stat_PLT, aes(x=day_after_HSCT, y=PLT, colour=Reconstitution)) + 
+  geom_errorbar(aes(ymin=PLT-se, ymax=PLT+se), width=0.2, size=0.5) +
+  geom_line() +
+  geom_point() +
+  theme_classic() 
+
+```
