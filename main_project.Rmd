@@ -440,3 +440,191 @@ ggplot( stat_PLT, aes(x=day_after_HSCT, y=PLT, colour=Reconstitution)) +
   theme_classic() 
 
 ```
+
+
+
+## Regressions
+### Prepare data (4 merges)
+```{r }
+# Test and train
+df_raw2 <- read_excel("./data/raw/blood_tests.xlsx")
+View(df_raw2)
+str(df_raw2)
+
+###################DAY10
+# colect columns and remove duplicated days for a patient
+day10 <- df_raw2 %>%
+  dplyr::filter(day_after_HSCT  == 10 ) %>%
+  dplyr::select(c(ID, WBC, PLT, day_after_HSCT)) %>%
+  dplyr::group_by(ID, day_after_HSCT) %>%
+  dplyr::summarise(WBC=mean(WBC), PLT = mean(PLT)) %>%
+  dplyr::rename(Patient_ID = ID) %>%
+  dplyr::rename(WBC_day10 = WBC) %>%
+  dplyr::rename(PLT_day10 = PLT) %>%
+  dplyr::select(Patient_ID, WBC_day10, PLT_day10)
+
+View(day10)
+
+# check for duplicates
+length(unique(day10$Patient_ID))
+length(day10$Patient_ID)
+
+# Merge with the main dataset
+combined_day_10  <- merge(df, day10, by = "Patient_ID", all=T)
+dim(df)
+dim(combined_day_10)
+
+###################DAY15
+day15 <- df_raw2 %>%
+  dplyr::filter(day_after_HSCT  == 15 ) %>%
+  dplyr::select(c(ID, WBC, PLT, day_after_HSCT)) %>%
+  dplyr::group_by(ID, day_after_HSCT) %>%
+  dplyr::summarise(WBC=mean(WBC), PLT = mean(PLT)) %>%
+  dplyr::rename(Patient_ID = ID) %>%
+  dplyr::rename(WBC_day15 = WBC) %>%
+  dplyr::rename(PLT_day15 = PLT) %>%
+  dplyr::select(Patient_ID, WBC_day15, PLT_day15)
+
+View(day15)
+
+# check for duplicates
+length(unique(day15$Patient_ID))
+length(day15$Patient_ID)
+
+# Merge with the main dataset
+combined_day_10_15  <- merge(combined_day_10, day15, by = "Patient_ID", all=T)
+dim(df)
+dim(combined_day_10_15)
+
+
+
+###################DAY20
+day20 <- df_raw2 %>%
+  dplyr::filter(day_after_HSCT  == 20 ) %>%
+  dplyr::select(c(ID, WBC, PLT, day_after_HSCT)) %>%
+  dplyr::group_by(ID, day_after_HSCT) %>%
+  dplyr::summarise(WBC=mean(WBC), PLT = mean(PLT)) %>%
+  dplyr::rename(Patient_ID = ID) %>%
+  dplyr::rename(WBC_day20 = WBC) %>%
+  dplyr::rename(PLT_day20 = PLT) %>%
+  dplyr::select(Patient_ID, WBC_day20, PLT_day20)
+
+View(day20)
+
+# check for duplicates
+length(unique(day20$Patient_ID))
+length(day20$Patient_ID)
+
+# Merge with the main dataset
+combined_day_10_15_20  <- merge(combined_day_10_15, day20, by = "Patient_ID", all=T)
+dim(df)
+dim(combined_day_10_15_20)
+
+
+
+###################DAY25
+day25 <- df_raw2 %>%
+  dplyr::filter(day_after_HSCT  == 25 ) %>%
+  dplyr::select(c(ID, WBC, PLT, day_after_HSCT)) %>%
+  dplyr::group_by(ID, day_after_HSCT) %>%
+  dplyr::summarise(WBC=mean(WBC), PLT = mean(PLT)) %>%
+  dplyr::rename(Patient_ID = ID) %>%
+  dplyr::rename(WBC_day25 = WBC) %>%
+  dplyr::rename(PLT_day25 = PLT) %>%
+  dplyr::select(Patient_ID, WBC_day25, PLT_day25)
+
+View(day25)
+
+# check for duplicates
+length(unique(day25$Patient_ID))
+length(day25$Patient_ID)
+
+# Merge with the main dataset
+combined_day_10_15_20_25  <- merge(combined_day_10_15_20, day25, by = "Patient_ID", all=T)
+dim(df)
+dim(combined_day_10_15_20_25)
+
+```
+
+
+### Split test and train
+```{r }
+
+response.column = 'Reconstitution'
+response = combined_day_10_15_20_25[[response.column]]
+table(response)
+
+set.seed(323) #setting random number
+index <- sample(2, nrow(combined_day_10_15_20_25), prob = c(0.65, 0.35), replace = TRUE)
+default_trn <- combined_day_10_15_20_25[index==1, ] # Train data
+default_tst <- combined_day_10_15_20_25[index == 2, ] # Test data 
+
+table(default_trn$Reconstitution)
+table(default_tst$Reconstitution)
+
+##################################################################
+```
+### Models
+```{r }
+#########################################################################
+# Regression
+# https://www.datacamp.com/community/tutorials/logistic-regression-R
+# Строим модель
+model0 <- glm(Reconstitution ~ Transplantation_groups + Source_sc + BMI,# + Age, 
+               data = default_trn, family = binomial)
+
+model_day10 <- glm(Reconstitution ~ Transplantation_groups + Source_sc + BMI + PLT_day10 + WBC_day10,  
+               data = default_trn, family = binomial)
+
+model_day15 <- glm(Reconstitution ~ Transplantation_groups + Source_sc + BMI + PLT_day15 + WBC_day15,
+               data = default_trn, family = binomial)
+
+model_day20 <- glm(Reconstitution ~ Transplantation_groups + Source_sc + BMI + PLT_day20 + WBC_day20, 
+               data = default_trn, family = binomial)
+
+model_day25 <- glm(Reconstitution ~  Transplantation_groups + Source_sc + BMI + PLT_day25 + WBC_day25,
+               data = default_trn, family = binomial)
+
+# смотрим на модель
+summary(model_day15)
+#coef(glm.fit)
+#head(predict(glm.fit))
+#glm.probs <- predict(glm.fit, type = "response")
+#glm.probs[1:10]
+
+# Как она предсказывает на трейне, порог тут 0,9 - можно менять
+#glm.pred <- ifelse(glm.probs > 0.9, "yes", "no")
+#attach(default_trn)
+#table(glm.pred, Reconstitution)
+#table(glm.pred, default_trn$Reconstitution)
+##################################################################
+```
+
+
+### Строим ROC/AUC на тестовой выборке
+```{r }
+#########################################################################
+
+library(pROC)
+test_model0 = predict(model0, newdata = default_tst, type = "response")
+test_model_day10 = predict(model_day10, newdata = default_tst, type = "response")
+test_model_day15 = predict(model_day15, newdata = default_tst, type = "response")
+test_model_day20 = predict(model_day20, newdata = default_tst, type = "response")
+test_model_day25 = predict(model_day25, newdata = default_tst, type = "response")
+
+
+plot.roc(default_tst$Reconstitution, test_model0, legacy.axes=FALSE, percent=TRUE, col="red4", lwd=2, print.auc=TRUE)
+plot.roc(default_tst$Reconstitution, test_model_day10, percent=TRUE, col="goldenrod", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=40)
+plot.roc(default_tst$Reconstitution, test_model_day15, percent=TRUE, col="slategrey", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=30)
+plot.roc(default_tst$Reconstitution, test_model_day20, percent=TRUE, col="seagreen", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=20)
+plot.roc(default_tst$Reconstitution, test_model_day25, percent=TRUE, col="navy", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=10)
+
+# Add legend
+legend("bottomright",
+       legend=c("Day_0", "Day_10", "Day_15", "Day_20", "Day_25"),
+       col=c("red4", "goldenrod", "slategrey", "seagreen", "navy"),
+       lwd=4, cex =0.7, xpd = TRUE)# horiz = TRUE)
+title(main = "Models with WBC and PLT")
+
+```
+
