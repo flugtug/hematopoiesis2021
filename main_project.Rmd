@@ -714,3 +714,109 @@ title(main = "Models with WBC and PLT")
 
 ```
 
+
+# Replase missing walues of the blood test with previous not NA
+```{r }
+#########################################################################
+
+df_raw2 <- read_excel("./data/raw/blood_tests.xlsx")
+
+df_new <- df
+for (day in 1:30) {
+  day_df <- df_raw2 %>%
+  dplyr::filter(day_after_HSCT  == day ) %>%
+  dplyr::select(c(ID, WBC, PLT, day_after_HSCT)) %>%
+  dplyr::group_by(ID, day_after_HSCT) %>%
+  dplyr::summarise(WBC=mean(WBC), PLT = mean(PLT)) %>%
+  dplyr::rename(Patient_ID = ID) %>%
+  dplyr::rename_at(vars(c(WBC, PLT)),function(x) paste0(x, day)) %>%
+  dplyr::select(-day_after_HSCT)
+  #print(head(day_df))
+  
+  df_new  <- merge(df_new, day_df, by = "Patient_ID", all=T)
+}
+view(df_new)
+
+df_new_no_na <- df_new
+for (day in 2:30) { 
+  
+ WBC_now <- paste0("WBC", day)
+ WBC_prev <- paste0("WBC", day-1)
+ PLT_now <- paste0("PLT", day)
+ PLT_prev <- paste0("PLT", day-1)
+ #print(c(WBC_now,  WBC_prev))
+ 
+ df_new_no_na <- df_new_no_na %>% 
+ dplyr::mutate(!!WBC_now := coalesce(!!sym(WBC_now), !!sym(WBC_prev)))    %>%  
+ dplyr::mutate(!!PLT_now := coalesce(!!sym(PLT_now), !!sym(PLT_prev))) 
+ 
+} 
+
+View(dfblood_some_days)
+
+some_days_no_na <- df_new_no_na %>%
+  dplyr::select(c(Patient_ID, Reconstitution, Transplantation_groups, Source_sc,  Age, 
+                  Conditioning, WBC10, WBC15, WBC20, WBC25,
+                  PLT10, PLT15, PLT20, PLT25))
+
+dim(na.omit(some_days_no_na))
+dim(some_days_no_na)
+some_days_no_na = na.omit(some_days_no_na)
+
+sapply(some_days_no_na, function(x) sum(is.na(x)))
+
+```
+
+# Replase missing walues of the blood test with previous not NA
+```{r }
+#########################################################################
+df_raw2 <- read_excel("./data/raw/blood_tests.xlsx")
+
+
+## First caombine all days from 1 to 30 by patient
+df_new <- df
+for (day in 1:30) {
+  day_df <- df_raw2 %>%
+  dplyr::filter(day_after_HSCT  == day ) %>%
+  dplyr::select(c(ID, WBC, PLT, day_after_HSCT)) %>%
+  dplyr::group_by(ID, day_after_HSCT) %>%
+  dplyr::summarise(WBC=mean(WBC), PLT = mean(PLT)) %>%
+  dplyr::rename(Patient_ID = ID) %>%
+  dplyr::rename_at(vars(c(WBC, PLT)),function(x) paste0(x, day)) %>%
+  dplyr::select(-day_after_HSCT)
+  #print(head(day_df))
+  df_new  <- merge(df_new, day_df, by = "Patient_ID", all=T)
+}
+view(df_new)
+
+
+# Replase missing values with previous from 2 to 30
+## Function coalesce
+df_new_no_na <- df_new
+for (day in 2:30) { 
+ WBC_now <- paste0("WBC", day)
+ WBC_prev <- paste0("WBC", day-1)
+ PLT_now <- paste0("PLT", day)
+ PLT_prev <- paste0("PLT", day-1)
+ #print(c(WBC_now,  WBC_prev))
+ 
+ df_new_no_na <- df_new_no_na %>% 
+ dplyr::mutate(!!WBC_now := coalesce(!!sym(WBC_now), !!sym(WBC_prev)))    %>%  
+ dplyr::mutate(!!PLT_now := coalesce(!!sym(PLT_now), !!sym(PLT_prev))) 
+ 
+} 
+View(dfblood_some_days)
+
+## Select our days of interest
+some_days_no_na <- df_new_no_na %>%
+  dplyr::select(c(Patient_ID, Reconstitution, Transplantation_groups, Source_sc,  Age, 
+                  Conditioning, WBC10, WBC15, WBC20, WBC25,
+                  PLT10, PLT15, PLT20, PLT25))
+
+dim(na.omit(some_days_no_na))
+dim(some_days_no_na)
+some_days_no_na = na.omit(some_days_no_na)
+
+sapply(some_days_no_na, function(x) sum(is.na(x)))
+
+```
