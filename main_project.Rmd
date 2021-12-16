@@ -820,3 +820,341 @@ some_days_no_na = na.omit(some_days_no_na)
 sapply(some_days_no_na, function(x) sum(is.na(x)))
 
 ```
+
+
+# GLM without missing values
+### createDataPartition
+```{r }
+set.seed(200)
+trainIndex <- createDataPartition(some_days_no_na$Reconstitution, 
+                                  p = .8, list = FALSE, times = 1)
+
+train_data = some_days_no_na[ trainIndex,]
+test_data  = some_days_no_na[-trainIndex,]
+
+table(train_data$Reconstitution)
+table(test_data$Reconstitution)
+
+##################################################################
+```
+
+### Cross-validation
+```{r }
+set.seed(15) #Set seed to ensure reproducible results
+
+fitControl <- trainControl(method = "repeatedcv", number = 10, repeats = 20, 
+                          summaryFunction = twoClassSummary, 
+                           classProbs = TRUE, 
+                          savePredictions = TRUE)
+```
+
+### Models
+```{r }
+#########################################################################
+model0 <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age, 
+               data = train_data, 
+               method = 'glm',
+               family = "binomial",
+               trControl = fitControl,
+               metric = 'ROC')
+
+#summary(model0)
+
+model_day10 <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT10 + WBC10, 
+               data = train_data, 
+               method = 'glm',
+               family = "binomial",
+               trControl = fitControl,
+               metric = 'ROC')
+
+
+model_day15 <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age  + PLT15 + WBC15, 
+               data = train_data, 
+               method = 'glm',
+               family = "binomial",
+               trControl = fitControl,
+               metric = 'ROC')
+
+model_day20 <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT20 + WBC20, 
+               data = train_data, 
+               method = 'glm',
+               family = "binomial",
+               trControl = fitControl,
+               metric = 'ROC')
+
+model_day25 <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT25 + WBC25, 
+               data = train_data, 
+               method = 'glm',
+               family = "binomial",
+               trControl = fitControl,
+               metric = 'ROC')
+
+# смотрим на модель
+#summary(model_day25)
+```
+##################################################################
+
+
+### Строим ROC/AUC на тестовой выборке
+```{r }
+#########################################################################
+#library(pROC)
+test_model0 = predict(model0, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day10 = predict(model_day10, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day15 = predict(model_day15, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day20 = predict(model_day20, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day25 = predict(model_day25, newdata = test_data, type = "prob", na.action=na.pass) 
+
+plot.roc(test_data$Reconstitution, test_model0$yes, legacy.axes=FALSE, percent=TRUE, col="red4", lwd=2, print.auc=TRUE, print.auc.y=40)
+
+plot.roc(test_data$Reconstitution, test_model_day10$yes, percent=TRUE, col="goldenrod", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=35)
+
+plot.roc(test_data$Reconstitution, test_model_day15$yes, percent=TRUE, col="slategrey", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=30)
+plot.roc(test_data$Reconstitution, test_model_day20$yes, percent=TRUE, col="seagreen", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=25)
+plot.roc(test_data$Reconstitution, test_model_day25$yes, percent=TRUE, col="navy", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=20)
+
+# Add legend
+legend("bottomright",
+       legend=c("Day_0", "Day_10", "Day_15", "Day_20", "Day_25"),
+       col=c("red4", "goldenrod", "slategrey", "seagreen", "navy"),
+       lwd=4, cex =0.7, xpd = TRUE)# horiz = TRUE)
+title(main = "GLM with WBC and PLT")
+
+```
+
+#RANGER
+
+```{r }
+library(ranger)
+
+model0_ranger <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age, 
+               data = train_data, 
+               method = 'ranger',
+               trControl = fitControl,
+               metric = 'ROC')
+
+#summary(model0)
+
+model_day10_ranger <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT10 + WBC10, 
+               data = train_data, 
+               method = 'ranger',
+               trControl = fitControl,
+               metric = 'ROC')
+
+
+model_day15_ranger <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age  + PLT15 + WBC15, 
+               data = train_data, 
+               method = 'ranger',
+               trControl = fitControl,
+               metric = 'ROC')
+
+model_day20_ranger <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT20 + WBC20, 
+               data = train_data, 
+               method = 'ranger',
+               trControl = fitControl,
+               metric = 'ROC')
+
+model_day25_ranger <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT25 + WBC25, 
+               data = train_data, 
+               method = 'ranger',
+               trControl = fitControl,
+               metric = 'ROC')
+
+
+##################################################################
+```
+
+
+### Строим ROC/AUC на тестовой выборке
+```{r }
+#########################################################################
+
+library(pROC)
+test_model0_ranger = predict(model0_ranger, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day10_ranger = predict(model_day10_ranger, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day15_ranger = predict(model_day15_ranger, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day20_ranger = predict(model_day20_ranger, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day25_ranger = predict(model_day25_ranger, newdata = test_data, type = "prob", na.action=na.pass) 
+
+plot.roc(test_data$Reconstitution, test_model0_ranger$yes, legacy.axes=FALSE, percent=TRUE, col="red4", lwd=2, print.auc=TRUE)
+
+plot.roc(test_data$Reconstitution, test_model_day10_ranger$yes, percent=TRUE, col="goldenrod", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=40)
+
+plot.roc(test_data$Reconstitution, test_model_day15_ranger$yes, percent=TRUE, col="slategrey", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=30)
+plot.roc(test_data$Reconstitution, test_model_day20_ranger$yes, percent=TRUE, col="seagreen", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=20)
+plot.roc(test_data$Reconstitution, test_model_day25_ranger$yes, percent=TRUE, col="navy", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=10)
+
+# Add legend
+legend("bottomright",
+       legend=c("Day_0", "Day_10", "Day_15", "Day_20", "Day_25"),
+       col=c("red4", "goldenrod", "slategrey", "seagreen", "navy"),
+       lwd=4, cex =0.7, xpd = TRUE)# horiz = TRUE)
+title(main = "Models ranger with WBC and PLT")
+
+```
+
+
+#KNN
+
+```{r }
+model0_knn <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age, 
+               data = train_data, 
+               method = 'knn',
+               trControl = fitControl,
+               metric = 'ROC', 
+               preProcess = c("center","scale","pca"))
+
+#summary(model0)
+
+model_day10_knn <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT10 + WBC10, 
+               data = train_data, 
+               method = 'knn',
+               trControl = fitControl,
+               metric = 'ROC', 
+               preProcess = c("center","scale","pca"))
+
+
+model_day15_knn <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age  + PLT15 + WBC15, 
+               data = train_data, 
+               method = 'knn',
+               trControl = fitControl,
+               metric = 'ROC', 
+               preProcess = c("center","scale","pca"))
+
+model_day20_knn <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT20 + WBC20, 
+               data = train_data, 
+               method = 'knn',
+               trControl = fitControl,
+               metric = 'ROC', 
+               preProcess = c("center","scale","pca"))
+
+model_day25_knn <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT25 + WBC25, 
+               data = train_data, 
+               method = 'knn',
+               trControl = fitControl,
+               metric = 'ROC', 
+               preProcess = c("center","scale","pca"))
+
+
+##################################################################
+```
+
+
+#### Строим ROC/AUC на тестовой выборке
+```{r }
+#########################################################################
+
+library(pROC)
+test_model0_knn = predict(model0_knn, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day10_knn = predict(model_day10_knn, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day15_knn = predict(model_day15_knn, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day20_knn = predict(model_day20_knn, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day25_knn = predict(model_day25_knn, newdata = test_data, type = "prob", na.action=na.pass) 
+
+plot.roc(test_data$Reconstitution, test_model0_knn$yes, legacy.axes=FALSE, percent=TRUE, col="red4", lwd=2, print.auc=TRUE)
+
+plot.roc(test_data$Reconstitution, test_model_day10_knn$yes, percent=TRUE, col="goldenrod", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=40)
+
+plot.roc(test_data$Reconstitution, test_model_day15_knn$yes, percent=TRUE, col="slategrey", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=30)
+plot.roc(test_data$Reconstitution, test_model_day20_knn$yes, percent=TRUE, col="seagreen", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=20)
+plot.roc(test_data$Reconstitution, test_model_day25_knn$yes, percent=TRUE, col="navy", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=10)
+
+# Add legend
+legend("bottomright",
+       legend=c("Day_0", "Day_10", "Day_15", "Day_20", "Day_25"),
+       col=c("red4", "goldenrod", "slategrey", "seagreen", "navy"),
+       lwd=4, cex =0.7, xpd = TRUE)# horiz = TRUE)
+title(main = "Models KNN with WBC and PLT")
+
+```
+
+###XGBOOST - eXtreme Gradient BOOSTing ----
+
+```{r }
+
+xgb_grid_1  <-  expand.grid(
+  nrounds = 50,
+  eta = c(0.03),
+  max_depth = 1,
+  gamma = 0,
+  colsample_bytree = 0.6,
+  min_child_weight = 1,
+  subsample = 0.5
+)
+
+model0_xgb <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age, 
+               data = train_data, 
+               trControl = fitControl,
+               metric = 'ROC', 
+               method = "xgbTree",
+               tuneGrid=xgb_grid_1,
+               preProcess = c("center","scale","pca"))
+
+#summary(model0)
+
+model_day10_xgb <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT10 + WBC10, 
+               data = train_data, 
+               trControl = fitControl,
+               metric = 'ROC', 
+               method = "xgbTree",
+               tuneGrid=xgb_grid_1,
+               preProcess = c("center","scale","pca"))
+
+
+model_day15_xgb <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age  + PLT15 + WBC15, 
+               data = train_data, 
+              trControl = fitControl,
+               metric = 'ROC', 
+               method = "xgbTree",
+               tuneGrid=xgb_grid_1,
+               preProcess = c("center","scale","pca"))
+
+model_day20_xgb <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT20 + WBC20, 
+               data = train_data, 
+               trControl = fitControl,
+               metric = 'ROC', 
+               method = "xgbTree",
+               tuneGrid=xgb_grid_1,
+               preProcess = c("center","scale","pca"))
+
+model_day25_xgb <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT25 + WBC25, 
+               data = train_data, 
+               trControl = fitControl,
+               metric = 'ROC', 
+               method = "xgbTree",
+               tuneGrid=xgb_grid_1, 
+               preProcess = c("center","scale","pca"))
+
+```
+##################################################################
+
+
+#### ROC
+```{r }
+#########################################################################
+
+test_model0_xgb = predict(model0_xgb, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day10_xgb = predict(model_day10_xgb, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day15_xgb = predict(model_day15_xgb, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day20_xgb = predict(model_day20_xgb, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day25_xgb = predict(model_day25_xgb, newdata = test_data, type = "prob", na.action=na.pass) 
+
+
+plot.roc(test_data$Reconstitution, test_model0_xgb$yes, legacy.axes=FALSE, percent=TRUE, col="red4", lwd=2, print.auc=TRUE)
+plot.roc(test_data$Reconstitution, test_model_day10_xgb$yes, percent=TRUE, col="goldenrod", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=40)
+plot.roc(test_data$Reconstitution, test_model_day15_xgb$yes, percent=TRUE, col="slategrey", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=30)
+plot.roc(test_data$Reconstitution, test_model_day20_xgb$yes, percent=TRUE, col="seagreen", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=20)
+plot.roc(test_data$Reconstitution, test_model_day25_xgb$yes, percent=TRUE, col="navy", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=10)
+
+
+# Add legend
+legend("bottomright",
+       legend=c("Day_0", "Day_10", "Day_15", "Day_20", "Day_25"),
+       col=c("red4", "goldenrod", "slategrey", "seagreen", "navy"),
+       lwd=4, cex =0.7, xpd = TRUE)# horiz = TRUE)
+title(main = "XGB with WBC and PLT")
+
+```
+
+
+
