@@ -1158,3 +1158,167 @@ title(main = "XGB with WBC and PLT")
 
 
 
+# See what happend between day 15 and 20
+```{r }
+#########################################################################
+# Regression
+# https://www.datacamp.com/community/tutorials/logistic-regression-R
+# Строим модель
+
+df_raw2 <- read_excel("./data/raw/blood_tests.xlsx")
+
+df_new <- df
+for (day in 1:30) {
+  day_df <- df_raw2 %>%
+  dplyr::filter(day_after_HSCT  == day ) %>%
+  dplyr::select(c(ID, WBC, PLT, day_after_HSCT)) %>%
+  dplyr::group_by(ID, day_after_HSCT) %>%
+  dplyr::summarise(WBC=mean(WBC), PLT = mean(PLT)) %>%
+  dplyr::rename(Patient_ID = ID) %>%
+  dplyr::rename_at(vars(c(WBC, PLT)),function(x) paste0(x, day)) %>%
+  dplyr::select(-day_after_HSCT)
+  #print(head(day_df))
+  
+  df_new  <- merge(df_new, day_df, by = "Patient_ID", all=T)
+}
+#view(df_new)
+
+df_new_no_na <- df_new
+for (day in 2:21) { 
+  
+ WBC_now <- paste0("WBC", day)
+ WBC_prev <- paste0("WBC", day-1)
+ PLT_now <- paste0("PLT", day)
+ PLT_prev <- paste0("PLT", day-1)
+ #print(c(WBC_now,  WBC_prev))
+ 
+ df_new_no_na <- df_new_no_na %>% 
+ dplyr::mutate(!!WBC_now := coalesce(!!sym(WBC_now), !!sym(WBC_prev)))    %>%  
+ dplyr::mutate(!!PLT_now := coalesce(!!sym(PLT_now), !!sym(PLT_prev))) 
+ 
+} 
+
+
+day_15to_20_no_na <- df_new_no_na %>%
+  dplyr::select(c(Patient_ID, Reconstitution, Transplantation_groups, Source_sc,  Age, 
+                  Conditioning, WBC15, WBC16, WBC17, WBC18, WBC19, WBC20,
+                  PLT15, PLT16, PLT17, PLT18, PLT19, PLT20))
+
+dim(na.omit(day_15to_20_no_na))
+dim(day_15to_20_no_na)
+day_15to_20_no_na= na.omit(day_15to_20_no_na)
+
+
+```
+
+### GLM between day 15 and 20
+
+```{r }
+# See - https://www.kaggle.com/tentotheminus9/quick-glm-using-caret
+
+library('caret')
+set.seed(250)
+trainIndex <- createDataPartition(day_15to_20_no_na$Reconstitution, 
+                                  p = .8, list = FALSE, times = 1)
+
+train_data_15_20 = day_15to_20_no_na[ trainIndex,]
+test_data_15_20  = day_15to_20_no_na[-trainIndex,]
+
+table(train_data_15_20$Reconstitution)
+table(test_data_15_20 $Reconstitution)
+
+##################################################################
+```
+
+
+### Cross-validation
+```{r }
+set.seed(15) #Set seed to ensure reproducible results
+
+fitControl <- trainControl(method = "repeatedcv", number = 10, repeats = 20, 
+                          summaryFunction = twoClassSummary, 
+                           classProbs = TRUE, 
+                          savePredictions = TRUE)
+```
+### Models
+```{r }
+#########################################################################
+# Regression
+# https://www.datacamp.com/community/tutorials/logistic-regression-R
+# Строим модель
+
+model_day15_glm <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT15 + WBC15, 
+               data = train_data_15_20, 
+               method = 'glm',
+               family = "binomial",
+               trControl = fitControl,
+               metric = 'ROC')
+
+
+model_day16_glm <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT16 + WBC16, 
+               data = train_data_15_20, 
+               method = 'glm',
+               family = "binomial",
+               trControl = fitControl,
+               metric = 'ROC')
+
+
+model_day17_glm <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT17 + WBC17, 
+               data = train_data_15_20, 
+               method = 'glm',
+               family = "binomial",
+               trControl = fitControl,
+               metric = 'ROC')
+
+model_day18_glm <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT18 + WBC18, 
+               data = train_data_15_20, 
+               method = 'glm',
+               family = "binomial",
+               trControl = fitControl,
+               metric = 'ROC')
+
+model_day19_glm <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT19 + WBC19, 
+               data = train_data_15_20, 
+               method = 'glm',
+               family = "binomial",
+               trControl = fitControl,
+               metric = 'ROC')
+
+model_day20_glm <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT20 + WBC20, 
+               data = train_data_15_20, 
+               method = 'glm',
+               family = "binomial",
+               trControl = fitControl,
+               metric = 'ROC')
+
+```
+##################################################################
+
+
+### ROC/AUC на тестовой выборке
+```{r }
+#########################################################################
+
+library(pROC)
+test_model_day15 = predict(model_day15_glm, newdata = test_data_15_20, type = "prob", na.action=na.pass) 
+test_model_day16 = predict(model_day16_glm, newdata = test_data_15_20, type = "prob", na.action=na.pass) 
+test_model_day17 = predict(model_day17_glm, newdata = test_data_15_20, type = "prob", na.action=na.pass) 
+test_model_day18 = predict(model_day18_glm, newdata = test_data_15_20, type = "prob", na.action=na.pass)
+test_model_day19 = predict(model_day19_glm, newdata = test_data_15_20, type = "prob", na.action=na.pass) 
+test_model_day20 = predict(model_day20_glm, newdata = test_data_15_20, type = "prob", na.action=na.pass) 
+
+plot.roc(test_data_15_20$Reconstitution, test_model_day15$yes, legacy.axes=FALSE, percent=TRUE, col="red4", lwd=2, print.auc=TRUE, print.auc.y=35)
+plot.roc(test_data_15_20$Reconstitution, test_model_day16$yes, percent=TRUE, col="goldenrod", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=30)
+plot.roc(test_data_15_20$Reconstitution, test_model_day17$yes, percent=TRUE, col="slategrey", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=25)
+plot.roc(test_data_15_20$Reconstitution, test_model_day18$yes, percent=TRUE, col="seagreen", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=20)
+plot.roc(test_data_15_20$Reconstitution, test_model_day19$yes, percent=TRUE, col="navy", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=15)
+plot.roc(test_data_15_20$Reconstitution, test_model_day20$yes, percent=TRUE, col="green", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=10)
+
+# Add legend
+legend("bottomright",
+       legend=c("Day_15", "Day_16", "Day_17", "Day_18", "Day_19", "Day_20"),
+       col=c("red4", "goldenrod", "slategrey", "seagreen", "navy", "green"),
+       lwd=4, cex =0.7, xpd = TRUE)# horiz = TRUE)
+title(main = "Models with WBC and PLT")
+
+```
