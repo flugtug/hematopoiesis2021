@@ -145,7 +145,7 @@ prop.table(table(df$Reconstitution, df$Transplantation_groups))
 ```
 
 
-Тесты
+###Тесты
 
 ```{r }
 
@@ -154,7 +154,7 @@ chisq.test(df$Reconstitution, df$Transplantation_groups)
 fisher.test(df$Reconstitution, df$Transplantation_groups)
 ```
 
-График
+###График
 
 ```{r }
 
@@ -201,10 +201,6 @@ ggplot(df, aes(x =  Reconstitution,
 hist(df$Age)
 hist(df$BMI)
 
-
-```
-# Другие графики 
-```{r }
 p1 <- ggplot(df, aes(x = Reconstitution, y = BMI,
                     fill = Reconstitution)) +
   geom_boxplot() +
@@ -276,68 +272,12 @@ p10 <- ggplot(df, aes(x =  Reconstitution,
   geom_bar(position = "fill")
 p10 + scale_fill_brewer(palette = "YlGn") + theme_classic()
 
-
-```
-
-```{r }
-#########################################################################
-# Test and train
-set.seed(42)
-default_idx = sample(nrow(df), 500)
-default_trn = df[default_idx, ]
-default_tst = df[-default_idx, ]
-
-table(default_trn$Reconstitution)
-table(default_tst$Reconstitution)
-
-##################################################################
-
-```
-
-```{r }
-#########################################################################
-# Regression
-# https://www.datacamp.com/community/tutorials/logistic-regression-R
-# Строим модель
-glm.fit <- glm(Reconstitution ~ Transplantation_groups + Source_sc + Age, 
-               data = default_trn, family = binomial)
-
-# смотрим на модель
-summary(glm.fit)
-
-coef(glm.fit)
-
-head(predict(glm.fit))
-
-glm.probs <- predict(glm.fit, type = "response")
-glm.probs[1:10]
-
-# Как она предсказывает на трейне, порог тут 0,9 - можно менять
-glm.pred <- ifelse(glm.probs > 0.9, "yes", "no")
-attach(default_trn)
-table(glm.pred, Reconstitution)
-#table(glm.pred, default_trn$Reconstitution)
-
-##################################################################
-
-```
-
-```{r }
-#########################################################################
-# Строим ROC/AUC на тестовой выборке
-library(pROC)
-test_prob = predict(glm.fit, newdata = default_tst, type = "response")
-test_roc = roc(default_tst$Reconstitution ~ test_prob, plot = TRUE, print.auc = TRUE)
-
-##################################################################
-
 ```
 
 
-
 ##################################################################
-## Add the second dataset with  blood analysis
-### Days 10, 15, 20, 25, boxplots
+# Add the second dataset with  blood analysis
+## Days 10, 15, 20, 25, boxplots
 ```{r }
 df_raw2 <- read_excel("./data/raw/blood_tests.xlsx")
 View(df_raw2)
@@ -363,31 +303,32 @@ View(combined_some_days)
 
 table(combined_some_days$Reconstitution)
 table(combined_some_days$day_after_HSCT)
+```
 
 
-# Boxplots
-ggplot(day10, aes(x = , y = PLT, fill = Reconstitution)) +  
+## Boxplots
+```{r }
+ggplot(combined_some_days, aes(x = , y = PLT, fill = Reconstitution)) +  
   geom_boxplot() +  
-  facet_grid(. ~ day_after_HSCT)  +
+  facet_grid(. ~ day_after_HSCT, scales="free_x", space="free_x")  +
   scale_y_log10() +
   ylab("log10(PLT)") + 
-  theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()) +
-  theme_classic()
+  ggtitle("PLT difference") +
+  theme_bw() +
+  theme(axis.text.x = element_blank(), axis.title = element_text(size = 20), plot.title = element_text(size = 20))
 
 
-ggplot(day10, aes(x = , y = WBC, fill = Reconstitution)) +  
+
+ggplot(combined_some_days, aes(x = , y = WBC, fill = Reconstitution)) +  
   geom_boxplot() +  
-  facet_grid(. ~ day_after_HSCT)  +
+  facet_grid(. ~ day_after_HSCT, scales="free_x", space="free_x")  +
   #scale_y_continuous(limits = quantile(day10$WBC, c(0.1, 0.9))) +
   scale_y_log10() +
   ylab("log10(WBC)") + 
-  theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()) +
-  theme_bw() 
-
+  ggtitle("WBC difference") +
+  theme_bw() +
+  theme(axis.text.x = element_blank(), axis.title = element_text(size = 20), plot.title = element_text(size = 20)) 
+  
 
 ggplot(day10, aes(x = Reconstitution, y = PLT)) +
   geom_boxplot(color="red",
@@ -399,7 +340,8 @@ ggplot(day10, aes(x = Reconstitution, y = PLT)) +
 ```
 
 
-### All days before 35 - geom_errorbars
+
+## All days before 35 - geom_errorbars
 ```{r }
 #!!!!!!!!!!!!!!!!!!!!!!!!!
 # this block uses library(Rmisc), that conflict with dplyr
@@ -423,10 +365,17 @@ stat_WBC <- summarySE(day_all,
 #view(stat_WBC)
 
 ggplot( stat_WBC, aes(x=day_after_HSCT, y=WBC, colour=Reconstitution)) + 
-  geom_errorbar(aes(ymin=WBC-se, ymax=WBC+se), width=0.2, size=0.5) +
+  geom_errorbar(aes(ymin=WBC-se, ymax=WBC+se), width=0.5, size=0.8) +
   geom_line() +
   geom_point() +
-  theme_classic() 
+  scale_x_continuous(breaks = seq(0, 40, by = 5))+
+  ggtitle("mean WBC changes by day") +
+  theme_bw() +
+  theme(axis.title = element_text(size = 20), 
+        axis.text.y = element_text(size = 15),
+        plot.title = element_text(size = 30),
+        legend.title = element_text(size = 20),
+        legend.text = element_text(size = 15)) 
 
 stat_PLT <- summarySE(day_all, 
                       measurevar="PLT", 
@@ -437,13 +386,20 @@ ggplot( stat_PLT, aes(x=day_after_HSCT, y=PLT, colour=Reconstitution)) +
   geom_errorbar(aes(ymin=PLT-se, ymax=PLT+se), width=0.2, size=0.5) +
   geom_line() +
   geom_point() +
-  theme_classic() 
+  scale_x_continuous(breaks = seq(0, 40, by = 5))+
+  ggtitle("mean PLT, changes by day") +
+  theme_bw() +
+  theme(axis.title = element_text(size = 20), 
+        axis.text.y = element_text(size = 15),
+        plot.title = element_text(size = 30),
+        legend.title = element_text(size = 20),
+        legend.text = element_text(size = 15)) 
 
 ```
 
 
 
-## Regressions
+## Regressions - the first try, with missing values
 ### Prepare data (4 merges)
 ```{r }
 # Test and train
