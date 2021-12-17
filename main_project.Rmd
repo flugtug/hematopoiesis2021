@@ -1219,6 +1219,55 @@ title(main = "Naive Bayes classificator with WBC and PLT")
 
 
 
+# All models on one plot
+```{r }
+# Set plotting parameters
+par(mfcol=c(2,2), pty = "s", oma = c(4,1,1,1))
+
+# ROC plot 1
+plot.roc(test_data$Reconstitution, test_model0_xgb$yes, legacy.axes=FALSE, percent=TRUE, col="red4", lwd=2, print.auc=TRUE, print.auc.y=30)
+plot.roc(test_data$Reconstitution, test_model_day10_xgb$yes, percent=TRUE, col="goldenrod", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=25)
+plot.roc(test_data$Reconstitution, test_model_day15_xgb$yes, percent=TRUE, col="slategrey", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=20)
+plot.roc(test_data$Reconstitution, test_model_day20_xgb$yes, percent=TRUE, col="seagreen", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=15)
+plot.roc(test_data$Reconstitution, test_model_day25_xgb$yes, percent=TRUE, col="navy", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=10)
+title(main = "XGBOOST", line = 1)
+
+# ROC plot 2
+plot.roc(test_data$Reconstitution, test_model0_nb$yes, legacy.axes=FALSE, percent=TRUE, col="red4", lwd=2, print.auc=TRUE, print.auc.y=30)
+plot.roc(test_data$Reconstitution, test_model_day10_nb$yes, percent=TRUE, col="goldenrod", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=25)
+plot.roc(test_data$Reconstitution, test_model_day15_nb$yes, percent=TRUE, col="slategrey", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=20)
+plot.roc(test_data$Reconstitution, test_model_day20_nb$yes, percent=TRUE, col="seagreen", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=15)
+plot.roc(test_data$Reconstitution, test_model_day25_nb$yes, percent=TRUE, col="navy", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=10)
+title(main = "Naive Bayes", line = 1)
+
+plot.roc(test_data$Reconstitution, test_model0_knn$yes, legacy.axes=FALSE, percent=TRUE, col="red4", lwd=2, print.auc=TRUE, 
+         print.auc.y=30)
+plot.roc(test_data$Reconstitution, test_model_day10_knn$yes, percent=TRUE, col="goldenrod", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=25)
+plot.roc(test_data$Reconstitution, test_model_day15_knn$yes, percent=TRUE, col="slategrey", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=20)
+plot.roc(test_data$Reconstitution, test_model_day20_knn$yes, percent=TRUE, col="seagreen", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=15)
+plot.roc(test_data$Reconstitution, test_model_day25_knn$yes, percent=TRUE, col="navy", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=10)
+title(main = "KNN", line = 1)
+
+
+plot.roc(test_data$Reconstitution, test_model0_ranger$yes, legacy.axes=FALSE, percent=TRUE, col="red4", lwd=2, print.auc=TRUE, print.auc.y=30)
+plot.roc(test_data$Reconstitution, test_model_day10_ranger$yes, percent=TRUE, col="goldenrod", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=25)
+plot.roc(test_data$Reconstitution, test_model_day15_ranger$yes, percent=TRUE, col="slategrey", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=20)
+plot.roc(test_data$Reconstitution, test_model_day20_ranger$yes, percent=TRUE, col="seagreen", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=15)
+plot.roc(test_data$Reconstitution, test_model_day25_ranger$yes, percent=TRUE, col="navy", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=10)
+title(main = "Random forest", line = 1)
+par(mar=c(0,0,0,0))
+par(xpd="NA")
+# Add legend
+legend(x=200, y = -30,
+       # Add legend
+       legend=c("Day_0", "Day_10", "Day_15", "Day_20", "Day_25"),
+       col=c("red4", "goldenrod", "slategrey", "seagreen", "navy"),
+       lwd=5, cex = 1, horiz = TRUE)
+```
+
+
+
+
 
 
 
