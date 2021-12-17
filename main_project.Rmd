@@ -1156,6 +1156,74 @@ title(main = "XGB with WBC and PLT")
 
 ```
 
+## Naive Bayes
+
+```{r }
+library("klaR")
+
+model0_nb <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age, 
+               data = train_data, 
+               trControl = fitControl,
+               metric = 'ROC', 
+               method = "nb")
+
+model_day10_nb <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT10 + WBC10, 
+               data = train_data, 
+               trControl = fitControl,
+               metric = 'ROC', 
+               method = "nb")
+
+
+model_day15_nb <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age  + PLT15 + WBC15, 
+               data = train_data, 
+              trControl = fitControl,
+               metric = 'ROC', 
+               method = "nb")
+
+model_day20_nb <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT20 + WBC20, 
+               data = train_data, 
+               trControl = fitControl,
+               metric = 'ROC', 
+               method = "nb")
+
+model_day25_nb <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT25 + WBC25, 
+               data = train_data, 
+               trControl = fitControl,
+               metric = 'ROC', 
+               method = "nb")
+
+
+
+test_model0_nb = predict(model0_nb, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day10_nb = predict(model_day10_nb, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day15_nb = predict(model_day15_nb, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day20_nb = predict(model_day20_nb, newdata = test_data, type = "prob", na.action=na.pass) 
+test_model_day25_nb = predict(model_day25_nb, newdata = test_data, type = "prob", na.action=na.pass) 
+
+
+plot.roc(test_data$Reconstitution, test_model0_nb$yes, legacy.axes=FALSE, percent=TRUE, col="red4", lwd=2, print.auc=TRUE, print.auc.y=30)
+plot.roc(test_data$Reconstitution, test_model_day10_nb$yes, percent=TRUE, col="goldenrod", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=25)
+plot.roc(test_data$Reconstitution, test_model_day15_nb$yes, percent=TRUE, col="slategrey", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=20)
+plot.roc(test_data$Reconstitution, test_model_day20_nb$yes, percent=TRUE, col="seagreen", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=15)
+plot.roc(test_data$Reconstitution, test_model_day25_nb$yes, percent=TRUE, col="navy", lwd=2,  add=TRUE, print.auc=TRUE, print.auc.y=10)
+
+
+# Add legend
+legend("bottomright",
+       legend=c("Day_0", "Day_10", "Day_15", "Day_20", "Day_25"),
+       col=c("red4", "goldenrod", "slategrey", "seagreen", "navy"),
+       lwd=5, cex =1, xpd = TRUE)# horiz = TRUE)
+title(main = "Naive Bayes classificator with WBC and PLT")
+
+```
+
+
+
+
+
+
+
+
 
 
 # See what happend between day 15 and 20
@@ -1322,3 +1390,6 @@ legend("bottomright",
 title(main = "Models with WBC and PLT")
 
 ```
+
+
+
