@@ -1267,7 +1267,6 @@ legend(x=200, y = -30,
 ```{r }
 #########################################################################
 # Regression
-# https://www.datacamp.com/community/tutorials/logistic-regression-R
 # Строим модель
 
 df_raw2 <- read_excel("./data/raw/blood_tests.xlsx")
@@ -1319,7 +1318,6 @@ day_15to_20_no_na= na.omit(day_15to_20_no_na)
 ### GLM between day 15 and 20
 
 ```{r }
-# See - https://www.kaggle.com/tentotheminus9/quick-glm-using-caret
 
 library('caret')
 set.seed(250)
@@ -1349,7 +1347,6 @@ fitControl <- trainControl(method = "repeatedcv", number = 10, repeats = 20,
 ```{r }
 #########################################################################
 # Regression
-# https://www.datacamp.com/community/tutorials/logistic-regression-R
 # Строим модель
 
 model_day15_glm <- caret::train(Reconstitution ~ Transplantation_groups + Source_sc + Age + PLT15 + WBC15, 
