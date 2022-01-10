@@ -117,12 +117,14 @@ df <- df_raw  %>%
 
 View(df)
 str(df)
+table(df$Reconstitution)
+dim(df)
 ```
 
 
 ```{r }
 # Collect Patien_IDs
-write.table(df$Patient_ID, file='Проект гемопоез, отобранные пациенты.tsv', row.names = FALSE, col.names = FALSE)
+#write.table(df$Patient_ID, file='Проект гемопоез, отобранные пациенты.tsv', row.names = FALSE, col.names = FALSE)
 
 ```
 
@@ -163,6 +165,54 @@ ggplot(df, aes(x =  Reconstitution,
                fill = Transplantation_groups )) +
   geom_bar(position = "fill") +
   theme_classic()
+  
+# Крсиво для презентации  
+ggplot(df, aes(Reconstitution, fill=Transplantation_groups))+
+  geom_bar(position = "fill") +
+  geom_text(aes(label = ..count..), stat = "count", position = "fill",  size=6)+
+  scale_fill_brewer(palette = "GnBu") + theme_classic() +
+   theme(text=element_text(size=20), #change font size of all text
+        axis.text=element_text(size=20), #change font size of axis text
+        axis.title=element_text(size=20), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        legend.text=element_text(size=20), #change font size of legend text
+        legend.title=element_text(size=20)) #change font size of legend title
+
+
+ggplot(df, aes(Reconstitution, fill=Source_sc))+
+  geom_bar(position = "fill") +
+  geom_text(aes(label = ..count..), stat = "count", position = "fill",  size=6)+
+  scale_fill_brewer(palette = "GnBu") + theme_classic() +
+   theme(text=element_text(size=20), #change font size of all text
+        axis.text=element_text(size=20), #change font size of axis text
+        axis.title=element_text(size=20), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        legend.text=element_text(size=20), #change font size of legend text
+        legend.title=element_text(size=20)) #change font size of legend title
+
+
+ggplot(df, aes(Reconstitution, fill=Sex))+
+  geom_bar(position = "fill") +
+  geom_text(aes(label = ..count..), stat = "count", position = "fill",  size=6)+
+  scale_fill_brewer(palette = "GnBu") + theme_classic() +
+   theme(text=element_text(size=20), #change font size of all text
+        axis.text=element_text(size=20), #change font size of axis text
+        axis.title=element_text(size=20), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        legend.text=element_text(size=20), #change font size of legend text
+        legend.title=element_text(size=20)) #change font size of legend title
+
+ggplot(df, aes(Reconstitution, fill=Restage_on_TKM_point))+
+  geom_bar(position = "fill") +
+  geom_text(aes(label = ..count..), stat = "count", position = "fill",  size=6)+
+  scale_fill_brewer(palette = "GnBu") + theme_classic() +
+   theme(text=element_text(size=20), #change font size of all text
+        axis.text=element_text(size=20), #change font size of axis text
+        axis.title=element_text(size=20), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        legend.text=element_text(size=20), #change font size of legend text
+        legend.title=element_text(size=20)) #change font size of legend title
+  
 
 ```
 
@@ -315,7 +365,13 @@ ggplot(combined_some_days, aes(x = , y = PLT, fill = Reconstitution)) +
   ylab("log10(PLT)") + 
   ggtitle("PLT difference") +
   theme_bw() +
-  theme(axis.text.x = element_blank(), axis.title = element_text(size = 20), plot.title = element_text(size = 20))
+  theme(axis.text.x = element_blank(), axis.title = element_text(size = 20), plot.title = element_text(size = 20)) +
+   theme(text=element_text(size=20), #change font size of all text
+        axis.text=element_text(size=20), #change font size of axis text
+        axis.title=element_text(size=20), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        legend.text=element_text(size=20), #change font size of legend text
+        legend.title=element_text(size=20)) #change font size of legend title
 
 
 
@@ -327,7 +383,14 @@ ggplot(combined_some_days, aes(x = , y = WBC, fill = Reconstitution)) +
   ylab("log10(WBC)") + 
   ggtitle("WBC difference") +
   theme_bw() +
-  theme(axis.text.x = element_blank(), axis.title = element_text(size = 20), plot.title = element_text(size = 20)) 
+  theme(axis.text.x = element_blank(), axis.title = element_text(size = 20), plot.title = element_text(size = 20)) +
+   theme(text=element_text(size=20), #change font size of all text
+        axis.text=element_text(size=20), #change font size of axis text
+        axis.title=element_text(size=20), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        legend.text=element_text(size=20), #change font size of legend text
+        legend.title=element_text(size=20)) #change font size of legend title
+
   
 
 ggplot(day10, aes(x = Reconstitution, y = PLT)) +
